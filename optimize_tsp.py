@@ -6,7 +6,7 @@ from es_strategy import ES_STRATEGY
 
 
 # Create cities with random coordinates
-cities = np.random.rand(26, 2)
+cities = np.random.rand(36, 2)
 ts = TravelingSalesman(cities)
 distances = ts.distances
 ts.print_cities()
@@ -57,7 +57,13 @@ SIGMA = 0.1
 # The optimization stops after this many generations, even if a better solution has not been found.
 MAX_GENERATIONS = 200
 
-STRATEGY = ["mu_lambda", "one_plus_one", "one_plus_one_1_fifth", "mu_over_mu_lambda"]
+STRATEGY = [
+    "mu_lambda",
+    "mu_plus_lambda",
+    "one_plus_one",
+    "one_plus_one_1_fifth",
+    "mu_over_mu_lambda",
+]
 current_strategy = STRATEGY[0]
 
 # Run ES optimization
@@ -88,4 +94,6 @@ print("final tour", final_tour)
 total_distance = ts.calculate_total_distance(final_tour)
 print(f"\nTotal distance after optimization: {total_distance:.2f}km\n")
 
-ts.travel_cities_plot(final_tour, f"With Optimization {current_strategy}: {total_distance:.2f}km")
+ts.travel_cities_plot(
+    final_tour, f"With Optimization {current_strategy}: {total_distance:.2f}km"
+)

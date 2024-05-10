@@ -19,23 +19,25 @@ class ES_STRATEGY:
         self.offspring_size_lambda = offspring_size_lambda
         self.sigma = sigma
         self.max_generations = max_generations
-        self.parents = np.random.uniform(size=(population_size_mu, dimension))
         self.best_fitnesses = []
+        self.parents = np.random.uniform(size=(population_size_mu, dimension))
 
     def generate_offspring(self):
         # Initialize an empty list to store the offspring
         offspring = []
 
-        # If the strategy is (μ, λ)-ES
-        if self.strategy == "mu_lambda":
+        # If the strategy is (μ, λ)-ES or (μ+λ)-ES
+        if self.strategy in ["mu_lambda", "mu_plus_lambda"]:
             # Generate λ offspring
             for _ in range(self.offspring_size_lambda):
                 # Select a random parent
                 parent_idx = np.random.randint(self.population_size_mu)
                 # Generate an offspring by adding Gaussian noise to the parent
+
                 offspring_candidate = self.parents[parent_idx] + np.random.normal(
                     0, self.sigma, self.dimension
                 )
+                # Add the offspring to the list
                 # Add the offspring to the list
                 offspring.append(offspring_candidate)
 
@@ -74,12 +76,30 @@ class ES_STRATEGY:
             offspring = self.generate_offspring()
             offspring_fitnesses = self.evaluate_fitness(offspring)
 
-            sorted_indices = np.argsort(offspring_fitnesses)[::-1]
-            self.parents = np.array(offspring)[
-                sorted_indices[: self.population_size_mu]
-            ]
+            # In the (μ, λ)-ES strategy, only the offspring are considered for the next generation.
+            if self.strategy == "mu_lambda":
+                # Get the indices that would sort the offspring fitnesses in descending order.
+                sorted_indices = np.argsort(offspring_fitnesses)[::-1]
+                # Select the best μ individuals from the offspring to become the new parents.
+                self.parents = np.array(offspring)[
+                    sorted_indices[: self.population_size_mu]
+                ]
 
-            best_fitness = offspring_fitnesses[sorted_indices[0]]
+            # In the (μ+λ)-ES strategy, the parents and the offspring are combined,
+            # and the best μ individuals are selected as the new parents.
+            elif self.strategy == "mu_plus_lambda":
+                combined_population = np.concatenate((self.parents, offspring))
+                combined_fitnesses = np.concatenate(
+                    (self.evaluate_fitness(self.parents), offspring_fitnesses)
+                )
+                # Get the indices that would sort the combined fitnesses in descending order.
+                sorted_indices = np.argsort(combined_fitnesses)[::-1]
+                # Select the best μ individuals from the combined population to become the new parents.
+                self.parents = combined_population[
+                    sorted_indices[: self.population_size_mu]
+                ]
+
+            best_fitness = self.evaluate_fitness(self.parents)[0]
             self.best_fitnesses.append(best_fitness)
 
             # Apply the 1/5th success rule only for the (1+1)-ES strategy
